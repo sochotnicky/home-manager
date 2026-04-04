@@ -67,6 +67,12 @@ in
 
       package = lib.mkPackageOption pkgs "swayidle" { };
 
+      idlehint = mkOption {
+        type = with types; nullOr int;
+        default = null;
+        description = "If non-null, sets the timeout in seconds to indicate an idle login session to logind.";
+      };
+
       timeouts = mkOption {
         type = with types; listOf (submodule timeoutModule);
         default = [ ];
@@ -150,7 +156,13 @@ in
             ];
 
             args =
-              cfg.extraArgs ++ (lib.concatMap mkTimeout cfg.timeouts) ++ (lib.concatMap mkEvent cfg.events);
+              cfg.extraArgs
+              ++ (lib.concatMap mkTimeout cfg.timeouts)
+              ++ (lib.concatMap mkEvent cfg.events)
+              ++ lib.optionals (cfg.idlehint != null) [
+                "idlehint"
+                (toString cfg.idlehint)
+              ];
           in
           "${lib.getExe cfg.package} ${lib.escapeShellArgs args}";
       };
